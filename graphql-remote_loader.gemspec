@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Performant remote GraphQL queries from within a Ruby GraphQL API."
   spec.description   = "GraphQL::RemoteLoader allows performantly fetching data from remote GraphQL APIs in the resolvers of a graphql-ruby API."
-  spec.homepage      = "http://nwoodthorpe.com"
+  spec.homepage      = "https://github.com/d12/graphql-remote_loader"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
