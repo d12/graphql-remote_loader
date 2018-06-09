@@ -1,5 +1,5 @@
 # GraphQL Remote Loader
-Performant, batched GraphQL queries from within the resolvers of a `graphql-ruby` API.
+Performant, batched GraphQL queries from within the resolvers of a [`graphql-ruby`](https://github.com/rmosolgo/graphql-ruby) API.
 
 ## Example
 
@@ -24,11 +24,11 @@ Performant, batched GraphQL queries from within the resolvers of a `graphql-ruby
 ```
 
 ## Description
-`graphql-remote_loader` allows for querying GraphQL APIs from within resolvers of a `graphql-ruby` API. 
+`graphql-remote_loader` allows for querying GraphQL APIs from within resolvers of a [`graphql-ruby`](https://github.com/rmosolgo/graphql-ruby) API. 
 
 This can be used to create GraphQL APIs that depend on data from other GraphQL APIs, either remote or local. 
 
-A promise-based resolution strategy from Shopify's `graphql-batch` is used to batch all requested data into a single GraphQL query. Promises are fulfilled with only the data they requested.
+A promise-based resolution strategy from Shopify's [`graphql-batch`](https://github.com/Shopify/graphql-batch) is used to batch all requested data into a single GraphQL query. Promises are fulfilled with only the data they requested.
 
 You can think of it as a lightweight version of schema-stitching.
 
@@ -58,4 +58,8 @@ module MyApp
 end
 ```
 
-This example uses `graphql-client`. Any client, or even just plain `cURL`/`HTTP` can be used.
+This example uses [`graphql-client`](https://github.com/github/graphql-client). Any client, or even just plain `cURL`/`HTTP` can be used.
+
+## Current State
+
+This project is very much WIP. Some TODOs are listed in the issues. Bugs and feature requests should be added as issues.
