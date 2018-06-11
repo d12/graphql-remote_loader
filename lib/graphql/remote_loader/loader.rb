@@ -19,6 +19,10 @@ module GraphQL
         self.for.load([query, prime])
       end
 
+      def self.reset_index
+        @index = nil
+      end
+
       # Given a query string, return a response JSON
       def query(query_string)
         raise NotImplementedError,
@@ -41,7 +45,7 @@ module GraphQL
         filtered_results = {}
 
         # Select field keys on the results hash
-        fields = obj.keys.select { |k| k.match? /\Ap[0-9]+.*[^?]\z/ }
+        fields = obj.keys.select { |k| k.match /\Ap[0-9]+.*[^?]\z/ }
 
         # Filter methods that were not requested in this sub-query
         fields = fields.select do |field|
@@ -56,10 +60,18 @@ module GraphQL
           method_value = obj[method]
           filtered_value = filter_keys_on_response(method_value, prime)
 
-          filtered_results[method_name.underscore] = filtered_value
+          filtered_results[underscore(method_name)] = filtered_value
         end
 
         filtered_results
+      end
+
+      def underscore(str)
+        str.gsub(/::/, '/').
+        gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
+        gsub(/([a-z\d])([A-Z])/,'\1_\2').
+        tr("-", "_").
+        downcase
       end
     end
   end
