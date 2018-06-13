@@ -33,6 +33,32 @@ describe GraphQL::RemoteLoader::QueryMerger do
         end
       end
 
+      context "when there are directives" do
+        let(:result) { subject.merge([["foo @bar", 2]]) }
+
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo @bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are directives with arguments" do
+        let(:result) { subject.merge([["foo @bar(buzz: 1)", 2]]) }
+
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo @bar(buzz: 1)
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
       context "when there are arguments" do
         let(:result) { subject.merge([["foo(bar: 5){ buzz }", 2]]) }
 
@@ -111,6 +137,34 @@ describe GraphQL::RemoteLoader::QueryMerger do
                 p3buzz: buzz
                 p2bar: bar
               }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are directives" do
+        let(:result) { subject.merge([["foo @bar", 2], ["buzz @bazz", 3]]) }
+
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p3buzz: buzz @bazz
+              p2foo: foo @bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are directives with arguments" do
+        let(:result) { subject.merge([["foo @bar(a: 1)", 2], ["buzz @bazz(a: 1)", 3]]) }
+
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p3buzz: buzz @bazz(a: 1)
+              p2foo: foo @bar(a: 1)
             }
           GRAPHQL
           expect(result).to eq(expected_result.strip)
