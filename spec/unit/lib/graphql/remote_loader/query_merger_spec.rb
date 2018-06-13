@@ -46,6 +46,27 @@ describe GraphQL::RemoteLoader::QueryMerger do
         end
       end
 
+      context "when there are defined fragments" do
+        let(:result) { subject.merge([["query { foo { ... MyFragment } } fragment MyFragment on Foo { bar }", 2]]) }
+
+        # In order to resolve fields on fragments correctly, all
+        # fields on fragments must have prefixes
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo {
+                ...MyFragment
+              }
+            }
+
+            fragment MyFragment on Foo {
+              p2bar: bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
       context "when there are directives with arguments" do
         let(:result) { subject.merge([["foo @bar(buzz: 1)", 2]]) }
 
@@ -74,7 +95,7 @@ describe GraphQL::RemoteLoader::QueryMerger do
         end
       end
 
-      context "when there are fragment spreads" do
+      context "when there are inline fragments" do
         let(:result) { subject.merge([["foo { ... on Bar { buzz } }", 2]]) }
 
         it "returns the expected query" do
@@ -165,6 +186,60 @@ describe GraphQL::RemoteLoader::QueryMerger do
             query {
               p3buzz: buzz @bazz(a: 1)
               p2foo: foo @bar(a: 1)
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are defined fragments that are unique" do
+        let(:result) { subject.merge([
+            ["query { foo { ... MyFragment } } fragment MyFragment on Foo { bar }", 2],
+            ["query { foo { ... OtherFragment } } fragment OtherFragment on Buzz { bazz }", 3]
+          ])}
+
+        # In order to resolve fields on fragments correctly, all
+        # fields on fragments must have prefixes
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p6foo: foo {
+                ...OtherFragment
+                ...MyFragment
+              }
+            }
+
+            fragment OtherFragment on Buzz {
+              p3bazz: bazz
+            }
+
+            fragment MyFragment on Foo {
+              p2bar: bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are defined fragments that are NOT unique" do
+        let(:result) { subject.merge([
+            ["query { foo { ... MyFragment } } fragment MyFragment on Foo { bar }", 2],
+            ["query { foo { ... MyFragment } } fragment MyFragment on Foo { bar bazz }", 3]
+          ])}
+
+        # In order to resolve fields on fragments correctly, all
+        # fields on fragments must have prefixes
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p6foo: foo {
+                ...MyFragment
+              }
+            }
+
+            fragment MyFragment on Foo {
+              p6bar: bar
+              p3bazz: bazz
             }
           GRAPHQL
           expect(result).to eq(expected_result.strip)
