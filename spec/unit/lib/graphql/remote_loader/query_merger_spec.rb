@@ -8,7 +8,12 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo", 2]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo }")
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -16,7 +21,15 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo bar { buzz }", 2]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo p2bar: bar { p2buzz: buzz } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo
+              p2bar: bar {
+                p2buzz: buzz
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -24,7 +37,14 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo(bar: 5){ buzz }", 2]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo(bar: 5) { p2buzz: buzz } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo(bar: 5) {
+                p2buzz: buzz
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -32,7 +52,16 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo { ... on Bar { buzz } }", 2]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo { ... on Bar { p2buzz: buzz } } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p2foo: foo {
+                ... on Bar {
+                  p2buzz: buzz
+                }
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
     end
@@ -42,7 +71,15 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo bar", 2], ["buzz bazz", 3]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo p2bar: bar p3buzz: buzz p3bazz: bazz }")
+          expected_result = <<~GRAPHQL
+            query {
+              p3buzz: buzz
+              p3bazz: bazz
+              p2foo: foo
+              p2bar: bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -50,7 +87,17 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo(buzz: 1) { bar }", 2], ["foo(buzz: 2) {  bar }", 3]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p2foo: foo(buzz: 1) { p2bar: bar } p3foo: foo(buzz: 2) { p3bar: bar } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p3foo: foo(buzz: 2) {
+                p3bar: bar
+              }
+              p2foo: foo(buzz: 1) {
+                p2bar: bar
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -58,7 +105,15 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo { bar }", 2], ["foo { buzz }", 3]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p6foo: foo { p2bar: bar p3buzz: buzz } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p6foo: foo {
+                p3buzz: buzz
+                p2bar: bar
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
 
@@ -66,7 +121,15 @@ describe GraphQL::RemoteLoader::QueryMerger do
         let(:result) { subject.merge([["foo(buzz: 1) { bar }", 2], ["foo(buzz: 1) {  bar bazz }", 3]]) }
 
         it "returns the expected query" do
-          expect(result).to eq("query { p6foo: foo(buzz: 1) { p6bar: bar p3bazz: bazz } }")
+          expected_result = <<~GRAPHQL
+            query {
+              p6foo: foo(buzz: 1) {
+                p6bar: bar
+                p3bazz: bazz
+              }
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
         end
       end
     end
