@@ -4,19 +4,11 @@ Performant, batched GraphQL queries from within the resolvers of a [`graphql-rub
 ## Snippet
 
 ```ruby
-  field :repositoryUrl, String, description: "The repository URL"
+  field :login, String, null: false, description: "The currently authenticated GitHub user's login."
 
-  def repository_url
-    query = <<-GQL
-      node(id: "#{obj.global_relay_id}"){
-        ... on Repository {
-          url
-        }
-      }
-    GQL
-
-    GitHubLoader.load(query).then do |results|
-      results["node"]["url"]
+  def login
+    GitHubLoader.load("viewer { login }").then do |results|
+      results["viewer"]["login"]
     end
   end
 ```
