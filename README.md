@@ -1,5 +1,8 @@
 # GraphQL Remote Loader
+[![Gem Version](https://badge.fury.io/rb/graphql-remote_loader.svg)](https://badge.fury.io/rb/graphql-remote_loader)
+
 Performant, batched GraphQL queries from within the resolvers of a [`graphql-ruby`](https://github.com/rmosolgo/graphql-ruby) API.
+
 
 ## Snippet
 
