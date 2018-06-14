@@ -4,29 +4,27 @@ Performant, batched GraphQL queries from within the resolvers of a [`graphql-rub
 ## Example
 
 ```ruby
-  field :repositoryUrl, !types.String do
-    description "The repository URL"
+  field :repositoryUrl, String, description: "The repository URL"
 
-    resolve ->(obj, args, ctx) do
-      query = <<-GQL
-        node(id: "#{obj.global_relay_id}"){
-          ... on Repository {
-            url
-          }
+  def repository_url
+    query = <<-GQL
+      node(id: "#{obj.global_relay_id}"){
+        ... on Repository {
+          url
         }
-      GQL
-    
-      GitHubLoader.load(query).then do |results|
-        results["node"]["url"]
-      end
+      }
+    GQL
+
+    GitHubLoader.load(query).then do |results|
+      results["node"]["url"]
     end
   end
 ```
 
 ## Description
-`graphql-remote_loader` allows for querying GraphQL APIs from within resolvers of a [`graphql-ruby`](https://github.com/rmosolgo/graphql-ruby) API. 
+`graphql-remote_loader` allows for querying GraphQL APIs from within resolvers of a [`graphql-ruby`](https://github.com/rmosolgo/graphql-ruby) API.
 
-This can be used to create GraphQL APIs that depend on data from other GraphQL APIs, either remote or local. 
+This can be used to create GraphQL APIs that depend on data from other GraphQL APIs, either remote or local.
 
 A promise-based resolution strategy from Shopify's [`graphql-batch`](https://github.com/Shopify/graphql-batch) is used to batch all requested data into a single GraphQL query. Promises are fulfilled with only the data they requested.
 
@@ -51,8 +49,8 @@ require "graphql/remote_loader"
 module MyApp
   class GitHubLoader < GraphQL::RemoteLoader::Loader
     def query(query_string)
-      parsed_query = MyApp::Client.parse(query_string)
-      MyApp.query(parsed_query)
+      parsed_query = GraphQLClient.parse(query_string)
+      GraphQLClient.query(parsed_query)
     end
   end
 end
@@ -60,6 +58,9 @@ end
 
 This example uses [`graphql-client`](https://github.com/github/graphql-client). Any client, or even just plain `cURL`/`HTTP` can be used.
 
-## Current State
+## Running tests
+There is no setup required to run tests.
 
-This project is very much WIP. Some TODOs are listed in the issues. Bugs and feature requests should be added as issues.
+```
+rspec
+```
