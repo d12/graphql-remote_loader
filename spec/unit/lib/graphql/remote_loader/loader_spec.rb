@@ -72,6 +72,22 @@ describe GraphQL::RemoteLoader::Loader do
     end
   end
 
+  context "hitting the loader with an array" do
+    it "returns the correct results and only makes one query" do
+      TestLoader.any_instance.stub(:query).and_return({
+        "p2foo" => [{"p2bar" => 5}, {"p2bar" => 6}]
+      })
+      TestLoader.any_instance.should_receive(:query).once
+
+      result = GraphQL::Batch.batch do
+        TestLoader.load("foo { bar }")
+      end
+
+      expect(result["foo"][0]["bar"]).to eq(5)
+      expect(result["foo"][1]["bar"]).to eq(6)
+    end
+  end
+
   context "hitting the loader with overlapping fields with different sub-selections" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
