@@ -41,29 +41,35 @@ module GraphQL
       end
 
       def filter_keys_on_response(obj, prime)
-        return obj unless obj.is_a? Hash
-        filtered_results = {}
+        case obj
+        when Array
+          obj.map { |element| filter_keys_on_response(element, prime) }
+        when Hash
+          filtered_results = {}
 
-        # Select field keys on the results hash
-        fields = obj.keys.select { |k| k.match /\Ap[0-9]+.*[^?]\z/ }
+          # Select field keys on the results hash
+          fields = obj.keys.select { |k| k.match /\Ap[0-9]+.*[^?]\z/ }
 
-        # Filter methods that were not requested in this sub-query
-        fields = fields.select do |field|
-          prime_factor = field.match(/\Ap([0-9]+)/)[1].to_i
-          (prime_factor % prime) == 0
+          # Filter methods that were not requested in this sub-query
+          fields = fields.select do |field|
+            prime_factor = field.match(/\Ap([0-9]+)/)[1].to_i
+            (prime_factor % prime) == 0
+          end
+
+          # redefine methods on new obj, recursively filter sub-selections
+          fields.each do |method|
+            method_name = method.match(/\Ap[0-9]+(.*)/)[1]
+
+            method_value = obj[method]
+            filtered_value = filter_keys_on_response(method_value, prime)
+
+            filtered_results[underscore(method_name)] = filtered_value
+          end
+
+          filtered_results
+        else
+          return obj
         end
-
-        # redefine methods on new obj, recursively filter sub-selections
-        fields.each do |method|
-          method_name = method.match(/\Ap[0-9]+(.*)/)[1]
-
-          method_value = obj[method]
-          filtered_value = filter_keys_on_response(method_value, prime)
-
-          filtered_results[underscore(method_name)] = filtered_value
-        end
-
-        filtered_results
       end
 
       def underscore(str)
