@@ -212,4 +212,54 @@ describe GraphQL::RemoteLoader::Loader do
       expect(first["data"]["buzz"]).to be_nil
     end
   end
+
+  context "when errors are returned" do
+    context "when errored field is asked for once" do
+      it "fulfills promise with error map if it requested the field that errored" do
+        TestLoader.any_instance.stub(:query).and_return({
+          "data" => {
+            "p2foo" => nil
+          },
+          "errors" => [{
+            "message" => "Something went wrong!",
+            "path" => ["p2foo"]
+          }]
+        })
+        TestLoader.any_instance.should_receive(:query).once
+
+        result = GraphQL::Batch.batch do
+          TestLoader.load("foo")
+        end
+
+        expect(result["data"]["foo"]).to be_nil
+        expect(result["errors"][0]["message"]).to eq("Something went wrong!")
+        expect(result["errors"][0]["path"]).to eq(["foo"])
+      end
+    end
+
+    context "when errored field is asked for multiple times" do
+      it "fulfills promise with error map if it requested the field that errored" do
+        TestLoader.any_instance.stub(:query).and_return({
+          "data" => {
+            "p2foo" => nil
+          },
+          "errors" => [{
+            "message" => "Something went wrong!",
+            "path" => ["p6foo"]
+          }]
+        })
+        TestLoader.any_instance.should_receive(:query).once
+
+        results = GraphQL::Batch.batch do
+          Promise.all([TestLoader.load("foo"), TestLoader.load("foo")])
+        end
+
+        results.each do |result|
+          expect(result["data"]["foo"]).to be_nil
+          expect(result["errors"][0]["message"]).to eq("Something went wrong!")
+          expect(result["errors"][0]["path"]).to eq(["foo"])
+        end
+      end
+    end
+  end
 end
