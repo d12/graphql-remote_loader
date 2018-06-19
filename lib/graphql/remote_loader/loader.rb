@@ -33,10 +33,12 @@ module GraphQL
 
       def perform(queries_and_primes)
         query_string = QueryMerger.merge(queries_and_primes)
-        response = query(query_string)
+        response = query(query_string).to_h
+
+        data, errors = response["data"], response["errors"]
 
         queries_and_primes.each do |query, prime|
-          fulfill([query, prime], filter_keys_on_response(response.to_h, prime))
+          fulfill([query, prime], filter_keys_on_response(data, prime))
         end
       end
 

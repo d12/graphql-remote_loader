@@ -15,7 +15,7 @@ describe GraphQL::RemoteLoader::Loader do
 
   context "hitting the loader once" do
     it "returns the correct results and only makes one query" do
-      TestLoader.any_instance.stub(:query).and_return({"p2test" => "test_result"})
+      TestLoader.any_instance.stub(:query).and_return({"data" => {"p2test" => "test_result"}})
       TestLoader.any_instance.should_receive(:query).once
 
       results = GraphQL::Batch.batch do
@@ -28,7 +28,7 @@ describe GraphQL::RemoteLoader::Loader do
 
   context "hitting the loader multiple times for one field" do
     it "returns the correct results and only makes one query" do
-      TestLoader.any_instance.stub(:query).and_return({"p6test" => "test_result"})
+      TestLoader.any_instance.stub(:query).and_return({"data" => {"p6test" => "test_result"}})
       TestLoader.any_instance.should_receive(:query).once
 
       first, second = GraphQL::Batch.batch do
@@ -43,8 +43,10 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with multiple fields" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => "foo_result",
-        "p3bar" => "bar_result"
+        "data" => {
+          "p2foo" => "foo_result",
+          "p3bar" => "bar_result"
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -58,8 +60,10 @@ describe GraphQL::RemoteLoader::Loader do
 
     it "fulfills promises with no un-requested data" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => "foo_result",
-        "p3bar" => "bar_result"
+        "data" => {
+          "p2foo" => "foo_result",
+          "p3bar" => "bar_result"
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -75,7 +79,9 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with an array" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => [{"p2bar" => 5}, {"p2bar" => 6}]
+        "data" => {
+          "p2foo" => [{"p2bar" => 5}, {"p2bar" => 6}]
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -91,9 +97,11 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with overlapping fields with different sub-selections" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p6foo" => {
-          "p2bar" => "bar_result",
-          "p3buzz" => "buzz_result"
+        "data" => {
+          "p6foo" => {
+            "p2bar" => "bar_result",
+            "p3buzz" => "buzz_result"
+          }
         }
       })
       TestLoader.any_instance.should_receive(:query).once
@@ -108,9 +116,11 @@ describe GraphQL::RemoteLoader::Loader do
 
     it "fulfills promises with no un-requested data" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p6foo" => {
-          "p2bar" => "bar_result",
-          "p3buzz" => "buzz_result"
+        "data" => {
+          "p6foo" => {
+            "p2bar" => "bar_result",
+            "p3buzz" => "buzz_result"
+          }
         }
       })
       TestLoader.any_instance.should_receive(:query).once
@@ -130,11 +140,13 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with fields with differing argument values" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => {
-          "p2buzz" => "buzz_first_result"
-        },
-        "p3foo" => {
-          "p3buzz" => "buzz_second_result"
+        "data" => {
+          "p2foo" => {
+            "p2buzz" => "buzz_first_result"
+          },
+          "p3foo" => {
+            "p3buzz" => "buzz_second_result"
+          }
         }
       })
       TestLoader.any_instance.should_receive(:query).once
@@ -151,7 +163,9 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with one field with an alias" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => "bar_result"
+        "data" => {
+          "p2foo" => "bar_result"
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -166,8 +180,10 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with fields with overlapping aliases" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => "bar_result",
-        "p3buzz" => "bazz_result"
+        "data" => {
+          "p2foo" => "bar_result",
+          "p3buzz" => "bazz_result"
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -181,8 +197,10 @@ describe GraphQL::RemoteLoader::Loader do
 
     it "fulfills promises with only the data they asked for" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2foo" => "bar_result",
-        "p3buzz" => "bazz_result"
+        "data" => {
+          "p2foo" => "bar_result",
+          "p3buzz" => "bazz_result"
+        }
       })
       TestLoader.any_instance.should_receive(:query).once
 
