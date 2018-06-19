@@ -26,7 +26,6 @@ module GraphQL
           parsed_queries.each do |query|
             merge_query_recursive(query.definitions[0], merged_query.definitions[0])
             merge_fragment_definitions(query, merged_query)
-
           end
 
           merged_query.definitions.each do |definition|
@@ -61,13 +60,13 @@ module GraphQL
           a_query.selections.each do |a_query_selection|
             matching_field = b_query.selections.find do |b_query_selection|
               same_name = a_query_selection.name == b_query_selection.name
-              same_args = if exempt_node_types.any? { |type| b_query_selection.is_a?(type) }
-                true
-              else
-                arguments_equal?(a_query_selection, b_query_selection)
-              end
 
-              same_name && same_args
+              next same_name if exempt_node_types.any? { |type| b_query_selection.is_a?(type) }
+
+              same_args = arguments_equal?(a_query_selection, b_query_selection)
+              same_alias = a_query_selection.alias == b_query_selection.alias
+
+              same_name && same_args && same_alias
             end
 
             if matching_field
@@ -107,9 +106,14 @@ module GraphQL
           ]
 
           query_selections.each do |selection|
-            unless exempt_node_types.any? { |type| selection.is_a? type  }
+            unless exempt_node_types.any? { |type| selection.is_a? type }
               prime_factor = selection.instance_variable_get(:@prime)
-              selection.alias = "p#{prime_factor}#{selection.name}"
+
+              selection.alias = if selection.alias
+                "p#{prime_factor}#{selection.alias}"
+              else
+                "p#{prime_factor}#{selection.name}"
+              end
             end
 
             # Some nodes don't have selections (e.g. fragment spreads)

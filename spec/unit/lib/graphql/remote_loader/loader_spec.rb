@@ -147,4 +147,51 @@ describe GraphQL::RemoteLoader::Loader do
       expect(second["foo"]["buzz"]).to eq("buzz_second_result")
     end
   end
+
+  context "hitting the loader with one field with an alias" do
+    it "returns the correct results and only makes one query" do
+      TestLoader.any_instance.stub(:query).and_return({
+        "p2foo" => "bar_result"
+      })
+      TestLoader.any_instance.should_receive(:query).once
+
+      result = GraphQL::Batch.batch do
+        TestLoader.load("foo: bar")
+      end
+
+      expect(result["foo"]).to eq("bar_result")
+    end
+  end
+
+  context "hitting the loader with fields with overlapping aliases" do
+    it "returns the correct results and only makes one query" do
+      TestLoader.any_instance.stub(:query).and_return({
+        "p2foo" => "bar_result",
+        "p3buzz" => "bazz_result"
+      })
+      TestLoader.any_instance.should_receive(:query).once
+
+      first, second = GraphQL::Batch.batch do
+        Promise.all([TestLoader.load("foo: bar"), TestLoader.load("buzz: bazz")])
+      end
+
+      expect(first["foo"]).to eq("bar_result")
+      expect(second["buzz"]).to eq("bazz_result")
+    end
+
+    it "fulfills promises with only the data they asked for" do
+      TestLoader.any_instance.stub(:query).and_return({
+        "p2foo" => "bar_result",
+        "p3buzz" => "bazz_result"
+      })
+      TestLoader.any_instance.should_receive(:query).once
+
+      first, second = GraphQL::Batch.batch do
+        Promise.all([TestLoader.load("foo: bar"), TestLoader.load("buzz: bazz")])
+      end
+
+      expect(second["foo"]).to be_nil
+      expect(first["buzz"]).to be_nil
+    end
+  end
 end
