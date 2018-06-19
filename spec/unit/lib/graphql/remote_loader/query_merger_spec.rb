@@ -45,7 +45,7 @@ describe GraphQL::RemoteLoader::QueryMerger do
 
         it "returns the expected query" do
           expected_result = <<~GRAPHQL
-            query{
+            query {
               p2p3foobar: bar
             }
           GRAPHQL
@@ -193,6 +193,34 @@ describe GraphQL::RemoteLoader::QueryMerger do
               query {
                 p3p4buzzbazz: bazz
                 p2p3foobar: bar
+              }
+            GRAPHQL
+            expect(result).to eq(expected_result.strip)
+          end
+        end
+
+        # Notice we do not merge if aliases are differing.
+        context "when there is field name overlap but differing aliases" do
+          let(:result) { subject.merge([["foo: bar", 2], ["buzz: bar", 3]]) }
+
+          it "returns the expected query" do
+            expected_result = <<~GRAPHQL
+              query {
+                p3p4buzzbar: bar
+                p2p3foobar: bar
+              }
+            GRAPHQL
+            expect(result).to eq(expected_result.strip)
+          end
+        end
+
+        context "when there is field name overlap and same aliases" do
+          let(:result) { subject.merge([["foo: bar", 2], ["foo: bar", 3]]) }
+
+          it "returns the expected query" do
+            expected_result = <<~GRAPHQL
+              query {
+                p6p3foobar: bar
               }
             GRAPHQL
             expect(result).to eq(expected_result.strip)
