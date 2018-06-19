@@ -237,6 +237,26 @@ describe GraphQL::RemoteLoader::Loader do
       end
     end
 
+    context "when data key isn't present" do
+      it "fulfills promise with error map if it requested the field that errored" do
+        TestLoader.any_instance.stub(:query).and_return({
+          "errors" => [{
+            "message" => "Something went wrong!",
+            "path" => ["p2foo"]
+          }]
+        })
+        TestLoader.any_instance.should_receive(:query).once
+
+        result = GraphQL::Batch.batch do
+          TestLoader.load("foo")
+        end
+
+        expect(result["data"]).to be_nil
+        expect(result["errors"][0]["message"]).to eq("Something went wrong!")
+        expect(result["errors"][0]["path"]).to eq(["foo"])
+      end
+    end
+
     context "when errored field is asked for multiple times" do
       it "fulfills promise with error map if it requested the field that errored" do
         TestLoader.any_instance.stub(:query).and_return({
