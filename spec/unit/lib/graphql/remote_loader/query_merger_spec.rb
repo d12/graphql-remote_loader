@@ -33,6 +33,26 @@ describe GraphQL::RemoteLoader::QueryMerger do
         end
       end
 
+      context "when there are field aliases" do
+        let(:result) { subject.merge([["foo: bar", 2]]) }
+
+        # When aliases are involved, the computed alias form is
+        # p<prime><computed alias string><field_name>
+        #
+        # where <computed alias string> is
+        #  - "" if no alias
+        #  - p<alias length><alias> otherwise
+
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query{
+              p2p3foobar: bar
+            }
+          GRAPHQL
+          expect(result).to eq(expected_result.strip)
+        end
+      end
+
       context "when there are directives" do
         let(:result) { subject.merge([["foo @bar", 2]]) }
 
@@ -161,6 +181,22 @@ describe GraphQL::RemoteLoader::QueryMerger do
             }
           GRAPHQL
           expect(result).to eq(expected_result.strip)
+        end
+      end
+
+      context "when there are aliases" do
+        context "when there is no overlap" do
+          let(:result) { subject.merge([["foo: bar", 2], ["buzz: bazz", 3]]) }
+
+          it "returns the expected query" do
+            expected_result = <<~GRAPHQL
+              query {
+                p3p4buzzbazz: bazz
+                p2p3foobar: bar
+              }
+            GRAPHQL
+            expect(result).to eq(expected_result.strip)
+          end
         end
       end
 
