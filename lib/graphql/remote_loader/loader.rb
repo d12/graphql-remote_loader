@@ -38,7 +38,7 @@ module GraphQL
         data, errors = response["data"], response["errors"]
 
         queries_and_primes.each do |query, prime|
-          fulfill([query, prime], filter_keys_on_response(data, prime))
+          fulfill([query, prime], {"data" => filter_keys_on_response(data, prime)})
         end
       end
 
