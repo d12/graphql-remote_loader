@@ -91,8 +91,8 @@ end
 This example uses [`graphql-client`](https://github.com/github/graphql-client). Any client, or even just plain `cURL`/`HTTP` can be used.
 
 ## Running tests
-There is no setup required to run tests.
 
 ```
+bundle install
 rspec
 ```
