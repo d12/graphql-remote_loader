@@ -1,4 +1,5 @@
 require "prime"
+require "json"
 require_relative "query_merger"
 
 module GraphQL
@@ -38,14 +39,27 @@ module GraphQL
         data, errors = response["data"], response["errors"]
 
         queries_and_primes.each do |query, prime|
-          fulfill([query, prime], {"data" => filter_keys_on_response(data, prime)})
+          response = {}
+
+          response["data"] = filter_keys_on_data(data, prime)
+
+          errors_key = filter_errors(errors, prime)
+          response["errors"] = dup(errors_key) unless errors_key.empty?
+
+          scrub_primes_from_error_paths!(response["errors"])
+
+          fulfill([query, prime], response)
         end
       end
 
-      def filter_keys_on_response(obj, prime)
+      def dup(hash)
+        JSON.parse(hash.to_json)
+      end
+
+      def filter_keys_on_data(obj, prime)
         case obj
         when Array
-          obj.map { |element| filter_keys_on_response(element, prime) }
+          obj.map { |element| filter_keys_on_data(element, prime) }
         when Hash
           filtered_results = {}
 
@@ -63,7 +77,7 @@ module GraphQL
             method_name = method.match(/\Ap[0-9]+(.*)/)[1]
 
             method_value = obj[method]
-            filtered_value = filter_keys_on_response(method_value, prime)
+            filtered_value = filter_keys_on_data(method_value, prime)
 
             filtered_results[underscore(method_name)] = filtered_value
           end
@@ -71,6 +85,34 @@ module GraphQL
           filtered_results
         else
           return obj
+        end
+      end
+
+      def filter_errors(errors, prime)
+        return [] unless errors
+
+        errors.select do |error|
+          # For now, do not support global errors with no path key
+          next unless error["path"]
+
+          # We fulfill a promise with an error object if field in the path
+          # key was requested by the promise.
+          error["path"].all? do |path_key|
+            next true if path_key.is_a? Integer
+
+            path_key_prime = path_key.match(/\Ap([0-9]+)/)[1].to_i
+            path_key_prime % prime == 0
+          end
+        end
+      end
+
+      def scrub_primes_from_error_paths!(error_array)
+        return unless error_array
+
+        error_array.map do |error|
+          error["path"].map! do |path_key|
+            path_key.match(/\Ap[0-9]+(.*)/)[1]
+          end
         end
       end
 
