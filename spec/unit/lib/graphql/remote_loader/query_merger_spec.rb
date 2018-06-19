@@ -36,17 +36,10 @@ describe GraphQL::RemoteLoader::QueryMerger do
       context "when there are field aliases" do
         let(:result) { subject.merge([["foo: bar", 2]]) }
 
-        # When aliases are involved, the computed alias form is
-        # p<prime><computed alias string><field_name>
-        #
-        # where <computed alias string> is
-        #  - "" if no alias
-        #  - p<alias length><alias> otherwise
-
         it "returns the expected query" do
           expected_result = <<~GRAPHQL
             query {
-              p2p3foobar: bar
+              p2foo: bar
             }
           GRAPHQL
           expect(result).to eq(expected_result.strip)
@@ -191,8 +184,8 @@ describe GraphQL::RemoteLoader::QueryMerger do
           it "returns the expected query" do
             expected_result = <<~GRAPHQL
               query {
-                p3p4buzzbazz: bazz
-                p2p3foobar: bar
+                p3buzz: bazz
+                p2foo: bar
               }
             GRAPHQL
             expect(result).to eq(expected_result.strip)
@@ -206,8 +199,8 @@ describe GraphQL::RemoteLoader::QueryMerger do
           it "returns the expected query" do
             expected_result = <<~GRAPHQL
               query {
-                p3p4buzzbar: bar
-                p2p3foobar: bar
+                p3buzz: bar
+                p2foo: bar
               }
             GRAPHQL
             expect(result).to eq(expected_result.strip)
@@ -220,7 +213,7 @@ describe GraphQL::RemoteLoader::QueryMerger do
           it "returns the expected query" do
             expected_result = <<~GRAPHQL
               query {
-                p6p3foobar: bar
+                p6foo: bar
               }
             GRAPHQL
             expect(result).to eq(expected_result.strip)

@@ -151,7 +151,7 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with one field with an alias" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2p3foobar" => "bar_result"
+        "p2foo" => "bar_result"
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -166,8 +166,8 @@ describe GraphQL::RemoteLoader::Loader do
   context "hitting the loader with fields with overlapping aliases" do
     it "returns the correct results and only makes one query" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2p3foobar" => "bar_result",
-        "p3p4buzzbazz" => "bazz_result"
+        "p2foo" => "bar_result",
+        "p3buzz" => "bazz_result"
       })
       TestLoader.any_instance.should_receive(:query).once
 
@@ -181,8 +181,8 @@ describe GraphQL::RemoteLoader::Loader do
 
     it "fulfills promises with only the data they asked for" do
       TestLoader.any_instance.stub(:query).and_return({
-        "p2p3foobar" => "bar_result",
-        "p3p4buzzbazz" => "bazz_result"
+        "p2foo" => "bar_result",
+        "p3buzz" => "bazz_result"
       })
       TestLoader.any_instance.should_receive(:query).once
 
