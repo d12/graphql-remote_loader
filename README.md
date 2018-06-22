@@ -11,7 +11,7 @@ Performant, batched GraphQL queries from within the resolvers of a [`graphql-rub
 
   def login
     GitHubLoader.load("viewer { login }").then do |results|
-      results["viewer"]["login"]
+      results["data"]["viewer"]["login"] unless results["errors"].present?
     end
   end
 ```
