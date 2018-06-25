@@ -20,6 +20,18 @@ module GraphQL
         self.for.load([query, prime])
       end
 
+      # Loads the value, then if the query was successful, fulfills promise with
+      # the leaf value instead of the full results hash.
+      #
+      # If errors are present, returns nil.
+      def self.load_value(*path)
+        load(query_from_path(path)).then do |results|
+          next nil if results["errors"] && !results["errors"].empty?
+
+          value_from_hash(results["data"])
+        end
+      end
+
       def self.reset_index
         @index = nil
       end
@@ -122,6 +134,29 @@ module GraphQL
         gsub(/([a-z\d])([A-Z])/,'\1_\2').
         tr("-", "_").
         downcase
+      end
+
+      def self.query_from_path(path)
+        if path.length == 1
+          path.first
+        else
+          "#{path.first} { #{query_from_path(path[1..-1])} }"
+        end
+      end
+
+      # Input is a hash where all nested hashes have only one key.
+      #
+      # Output is the leaf at the end of the hash.
+      #
+      # e.g. {foo: {bar: 5}} => 5
+      def self.value_from_hash(hash_or_value)
+        case hash_or_value
+        when Hash
+          # {foo: {bar: 5}}.first[1] => {bar: 5}
+          value_from_hash(hash_or_value.first[1])
+        else
+          hash_or_value
+        end
       end
     end
   end

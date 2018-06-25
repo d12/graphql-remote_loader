@@ -282,4 +282,46 @@ describe GraphQL::RemoteLoader::Loader do
       end
     end
   end
+
+  context "#load_value" do
+    context "when no errors" do
+      it "returns value" do
+        TestLoader.any_instance.stub(:query).and_return({
+          "data" => {
+            "p2foo" => {
+              "p2bar" => 5
+            }
+          }
+        })
+        TestLoader.any_instance.should_receive(:query).once
+
+        result = GraphQL::Batch.batch do
+          TestLoader.load_value("foo", "bar")
+        end
+
+        expect(result).to eq(5)
+      end
+    end
+
+    context "when there are errors" do
+      it "returns nil" do
+        TestLoader.any_instance.stub(:query).and_return({
+          "data" => {
+            "p2foo" => nil
+          },
+          "errors" => [{
+            "message" => "Something went wrong!",
+            "path" => ["p2foo", "p2bar"]
+          }]
+        })
+        TestLoader.any_instance.should_receive(:query).once
+
+        result = GraphQL::Batch.batch do
+          TestLoader.load_value("foo", "bar")
+        end
+
+        expect(result).to be_nil
+      end
+    end
+  end
 end
