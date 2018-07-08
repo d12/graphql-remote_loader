@@ -6,14 +6,30 @@ Performant, batched GraphQL queries from within the resolvers of a [`graphql-rub
 
 ## Snippet
 
-```ruby
-  field :login, String, null: false, description: "The currently authenticated GitHub user's login."
+For default error handling(null if errors) and no post-processing:
 
-  def login
-    GitHubLoader.load("viewer { login }").then do |results|
-      results["data"]["viewer"]["login"] unless results["errors"].present?
+```ruby
+field :login, String, null: true, description: "The currently authenticated GitHub user's login."
+
+def login
+  GitHubLoader.load_value("viewer", "login")
+end
+```
+
+If you need error handling, post-processing, or complex queries:
+
+```ruby
+field :login, String, null: false, description: "The currently authenticated GitHub user's login."
+
+def login
+  GitHubLoader.load("viewer { login }").then do |results|
+    if results["errors"].present?
+      ""
+    else
+      results["data"]["viewer"]["login"].upcase
     end
   end
+end
 ```
 
 ## Full example
