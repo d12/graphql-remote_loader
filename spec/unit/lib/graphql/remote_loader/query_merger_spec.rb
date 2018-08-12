@@ -318,6 +318,29 @@ describe GraphQL::RemoteLoader::QueryMerger do
           expect(result).to eq(expected_result.strip)
         end
       end
+
+      context "when there are merging inline fragments" do
+        let(:result) { subject.merge[["foo { ... on Bar { buzz } }", 2], ["foo { ... on Bar { bazz } }", 3]] }
+
+        # It may seem strange that the inline fragments don't get merged here since their types are equal.
+        # And I agree. That's certainly odd.
+        # But, it works and is 100% valid, and there other things I'd like to tackle first!
+        # TODO: Merge inline fragment selections iff the spread type is the same
+        it "returns the expected query" do
+          expected_result = <<~GRAPHQL
+            query {
+              p6foo {
+                ... on Bar {
+                  p3bazz
+                }
+                ... on Bar {
+                  p2buzz
+                }
+              }
+            }
+          GRAPHQL
+        end
+      end
     end
   end
 end
