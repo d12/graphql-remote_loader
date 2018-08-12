@@ -59,6 +59,9 @@ module GraphQL
 
           a_query.selections.each do |a_query_selection|
             matching_field = b_query.selections.find do |b_query_selection|
+              next false if (a_query_selection.is_a? GraphQL::Language::Nodes::InlineFragment) &&
+                (b_query_selection.is_a? GraphQL::Language::Nodes::InlineFragment)
+
               same_name = a_query_selection.name == b_query_selection.name
 
               next same_name if exempt_node_types.any? { |type| b_query_selection.is_a?(type) }

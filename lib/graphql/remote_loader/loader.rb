@@ -11,21 +11,23 @@ module GraphQL
       # a) Avoid name collisions in the generated query
       # b) Determine which fields in the result JSON should be
       #    handed fulfilled to each promise
-      def self.load(query)
+      def self.load(query, context: {})
         @index ||= 1
         @index += 1
 
         prime = Prime.take(@index - 1).last
 
-        self.for.load([query, prime])
+        store_context(context)
+
+        self.for.load([query, prime, @context])
       end
 
       # Loads the value, then if the query was successful, fulfills promise with
       # the leaf value instead of the full results hash.
       #
       # If errors are present, returns nil.
-      def self.load_value(*path)
-        load(query_from_path(path)).then do |results|
+      def self.load_value(*path, context: {})
+        load(query_from_path(path), context: context).then do |results|
           next nil if results["errors"] && !results["errors"].empty?
 
           value_from_hash(results["data"])
@@ -34,6 +36,11 @@ module GraphQL
 
       def self.reset_index
         @index = nil
+      end
+
+      def self.store_context(context)
+        @context ||= {}
+        @context.merge!(context.to_h)
       end
 
       # Given a query string, return a response JSON
@@ -46,11 +53,12 @@ module GraphQL
 
       def perform(queries_and_primes)
         query_string = QueryMerger.merge(queries_and_primes)
-        response = query(query_string).to_h
+        context = queries_and_primes[-1][-1]
+        response = query(query_string, context: context).to_h
 
         data, errors = response["data"], response["errors"]
 
-        queries_and_primes.each do |query, prime|
+        queries_and_primes.each do |query, prime, context|
           response = {}
 
           response["data"] = filter_keys_on_data(data, prime)
@@ -60,7 +68,7 @@ module GraphQL
 
           scrub_primes_from_error_paths!(response["errors"])
 
-          fulfill([query, prime], response)
+          fulfill([query, prime, context], response)
         end
       end
 

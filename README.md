@@ -110,5 +110,5 @@ This example uses [`graphql-client`](https://github.com/github/graphql-client). 
 
 ```
 bundle install
-rspec
+bundle exec rspec
 ```

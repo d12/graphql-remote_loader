@@ -1,5 +1,4 @@
 require "spec_helper"
-require 'byebug'
 
 class TestLoader < GraphQL::RemoteLoader::Loader
   def query(query_string)
