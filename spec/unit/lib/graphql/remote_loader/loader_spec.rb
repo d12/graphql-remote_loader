@@ -282,6 +282,27 @@ describe GraphQL::RemoteLoader::Loader do
     end
   end
 
+  context "#load_on_relay_node" do
+    it "returns value" do
+      TestLoader.any_instance.stub(:query).and_return({
+        "data" => {
+          "p2node" => {
+            "p2viewer" => "foo"
+          }
+        }
+      })
+      TestLoader.any_instance.should_receive(:query)
+        .with("query {\n  p2node: node(id: \"id\") {\n    ... on Type {\n      p2viewer: viewer\n    }\n  }\n}", context: {})
+        .once
+
+      result = GraphQL::Batch.batch do
+        TestLoader.load_on_relay_node("id", "Type", "viewer")
+      end
+
+      expect(result["data"]["node"]["viewer"]).to eq("foo")
+    end
+  end
+
   context "#load_value" do
     context "when no errors" do
       it "returns value" do

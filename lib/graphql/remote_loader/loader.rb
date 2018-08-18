@@ -34,6 +34,22 @@ module GraphQL
         end
       end
 
+      # Shorthand helper method for #load calls selecting fields off of a `Node` type
+      # E.g. `load_on_relay_node("nodeid", "Type", "friends(first: 5) { totalCount }")`
+      # is identical to
+      # load("node(id: "nodeid") { ... on Type { friends(first: 5) { totalCount } } }")
+      def self.load_on_relay_node(node_id, type, selections, context: {})
+        query = <<-GRAPHQL
+          node(id: \"#{node_id}\") {
+            ... on #{type} {
+              #{selections}
+            }
+          }
+        GRAPHQL
+
+        load(query, context: context)
+      end
+
       def self.reset_index
         @index = nil
       end
