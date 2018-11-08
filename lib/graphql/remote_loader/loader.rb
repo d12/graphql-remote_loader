@@ -11,7 +11,7 @@ module GraphQL
       # a) Avoid name collisions in the generated query
       # b) Determine which fields in the result JSON should be
       #    handed fulfilled to each promise
-      def self.load(query, context: {})
+      def self.load(query, context: {}, variables: {})
         @index ||= 1
         @index += 1
 
