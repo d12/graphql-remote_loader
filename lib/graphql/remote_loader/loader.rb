@@ -11,13 +11,15 @@ module GraphQL
       # a) Avoid name collisions in the generated query
       # b) Determine which fields in the result JSON should be
       #    handed fulfilled to each promise
-      def self.load(query, context: {})
+      def self.load(query, context: {}, variables: {})
         @index ||= 1
         @index += 1
 
         prime = Prime.take(@index - 1).last
 
         store_context(context)
+
+        interpolate_variables!(query, variables)
 
         self.for.load([query, prime, @context])
       end
@@ -85,6 +87,33 @@ module GraphQL
           scrub_primes_from_error_paths!(response["errors"])
 
           fulfill([query, prime, context], response)
+        end
+      end
+
+      # Interpolates variables into the given query.
+      # For String variables, surrounds the interpolated string in quotes.
+      # To interpolate a String as an Int, Float, or Bool, convert to the appropriate Ruby type.
+      #
+      # E.g.
+      #   interpolate_variables("foo(bar: $my_var)", { my_var: "buzz" })
+      #   => "foo(bar: \"buzz\")"
+      def self.interpolate_variables!(query, variables = {})
+        variables.each do |variable, value|
+          case value
+          when Integer, Float, TrueClass, FalseClass
+            # These types are safe to directly interpolate into the query, and GraphQL does not expect these types to be quoted.
+            query.gsub!("$#{variable.to_s}", value.to_s)
+          else
+            # A string is either a GraphQL String or ID type.
+            # This means we need to
+            # a) Surround the value in quotes
+            # b) escape special characters in the string
+            #
+            # This else also catches unknown objects, which could break the query if we directly interpolate.
+            # These objects get converted to strings, then escaped.
+
+            query.gsub!("$#{variable.to_s}", value.to_s.inspect)
+          end
         end
       end
 
