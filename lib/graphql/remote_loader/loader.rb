@@ -19,6 +19,8 @@ module GraphQL
 
         store_context(context)
 
+        interpolate_variables!(query, variables)
+
         self.for.load([query, prime, @context])
       end
 
@@ -85,6 +87,31 @@ module GraphQL
           scrub_primes_from_error_paths!(response["errors"])
 
           fulfill([query, prime, context], response)
+        end
+      end
+
+      # Interpolates variables into the given query.
+      # For String variables, surrounds the interpolated string in quotes.
+      # To interpolate a String as an Int, Float, or Bool, convert to the appropriate Ruby type.
+      #
+      # E.g.
+      #   interpolate_variables("foo(bar: $my_var)", { my_var: "buzz" })
+      #   => "foo(bar: \"buzz\")"
+      def self.interpolate_variables!(query, variables = {})
+        variables.each do |variable, value|
+          case value
+          when String
+            # A string is either a GraphQL String or ID type.
+            # This means we need to
+            # a) Surround the value in quotes
+            # b) escape special characters in the string
+
+            query.gsub!("$#{variable.to_s}", value.inspect)
+          else
+            # When it's not a string, just `.to_s` and insert it in
+            # TODO: Better validation here, it'd be easy enough to break query syntax.
+            query.gsub!("$#{variable.to_s}", value.to_s)
+          end
         end
       end
 

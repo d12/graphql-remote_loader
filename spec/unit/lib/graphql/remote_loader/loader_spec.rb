@@ -66,7 +66,7 @@ describe GraphQL::RemoteLoader::Loader do
   end
 
   context "when variables are provided" do
-    it "interpolates variables" do
+    it "interpolates integer variables correctly" do
       TestLoader.any_instance.should_receive(:query).once
         .with("query { p2foo: foo(bar: 5) }", anything)
         .and_return({
@@ -77,6 +77,78 @@ describe GraphQL::RemoteLoader::Loader do
 
       results = GraphQL::Batch.batch do
         TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: 5 })
+      end
+
+      expect(results["data"]["foo"]).to eq("foo_result")
+    end
+
+    it "interpolates float variables correctly" do
+      TestLoader.any_instance.should_receive(:query).once
+        .with("query { p2foo: foo(bar: 5.545) }", anything)
+        .and_return({
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
+
+      results = GraphQL::Batch.batch do
+        TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: 5.545 })
+      end
+
+      expect(results["data"]["foo"]).to eq("foo_result")
+    end
+
+    it "interpolates boolean variables correctly" do
+      TestLoader.any_instance.should_receive(:query).once
+        .with("query { p2foo: foo(bar: true) }", anything)
+        .and_return({
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
+
+      results = GraphQL::Batch.batch do
+        TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: true })
+      end
+
+      expect(results["data"]["foo"]).to eq("foo_result")
+    end
+
+    it "interpolates string variables correctly" do
+      TestLoader.any_instance.should_receive(:query).once
+        .with("query { p2foo: foo(bar: \"testing string\") }", anything)
+        .and_return({
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
+
+      results = GraphQL::Batch.batch do
+        TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: "testing string" })
+      end
+
+      expect(results["data"]["foo"]).to eq("foo_result")
+    end
+
+
+    # The string we're inserting here is:
+    # "\"
+    # (the quotes are part of the string)
+    it "interpolates difficult string variables correctly" do
+      expected_query_string = <<~HEREDOC.strip
+        query { p2foo: foo(bar: \"\\\"\\\\\\\"\") }
+      HEREDOC
+
+      TestLoader.any_instance.should_receive(:query).once
+        .with(expected_query_string, anything)
+        .and_return({
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
+
+      results = GraphQL::Batch.batch do
+        TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: "\"\\\"" })
       end
 
       expect(results["data"]["foo"]).to eq("foo_result")
