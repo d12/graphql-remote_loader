@@ -153,6 +153,22 @@ describe GraphQL::RemoteLoader::Loader do
 
       expect(results["data"]["foo"]).to eq("foo_result")
     end
+
+    it "interpolates other variables correctly" do
+      TestLoader.any_instance.should_receive(:query).once
+        .with("query { p2foo: foo(bar: \"Object\") }", anything)
+        .and_return({
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
+
+      results = GraphQL::Batch.batch do
+        TestLoader.load("foo(bar: $my_variable)", variables: { my_variable: Object })
+      end
+
+      expect(results["data"]["foo"]).to eq("foo_result")
+    end
   end
 
   context "hitting the loader with an array" do

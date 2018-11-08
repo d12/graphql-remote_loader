@@ -100,17 +100,19 @@ module GraphQL
       def self.interpolate_variables!(query, variables = {})
         variables.each do |variable, value|
           case value
-          when String
+          when Integer, Float, TrueClass, FalseClass
+            # These types are safe to directly interpolate into the query, and GraphQL does not expect these types to be quoted.
+            query.gsub!("$#{variable.to_s}", value.to_s)
+          else
             # A string is either a GraphQL String or ID type.
             # This means we need to
             # a) Surround the value in quotes
             # b) escape special characters in the string
+            #
+            # This else also catches unknown objects, which could break the query if we directly interpolate.
+            # These objects get converted to strings, then escaped.
 
-            query.gsub!("$#{variable.to_s}", value.inspect)
-          else
-            # When it's not a string, just `.to_s` and insert it in
-            # TODO: Better validation here, it'd be easy enough to break query syntax.
-            query.gsub!("$#{variable.to_s}", value.to_s)
+            query.gsub!("$#{variable.to_s}", value.to_s.inspect)
           end
         end
       end
