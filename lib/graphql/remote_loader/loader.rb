@@ -68,7 +68,7 @@ module GraphQL
       private
 
       def perform(queries_and_primes)
-        query_string = QueryMerger.merge(queries_and_primes)
+        query_string = QueryMerger.merge(queries_and_primes).gsub(/\s+/, " ")
         context = queries_and_primes[-1][-1]
         response = query(query_string, context: context).to_h
 
