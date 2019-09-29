@@ -45,7 +45,9 @@ module GraphQL
             if matching_fragment_definition
               merge_query_recursive(a_definition, matching_fragment_definition)
             else
-              b_query.definitions << a_definition
+              # graphql-ruby Nodes aren't meant to be mutated, but I'd rather slightly abuse graphql-ruby vs
+              # maintain my own Ruby data and parsing library implementing the GraphQL spec.
+              b_query.instance_variable_set(:@definitions, [b_query.definitions, a_definition].flatten)
             end
           end
         end
@@ -79,7 +81,7 @@ module GraphQL
               matching_field.instance_variable_set(:@prime, new_prime)
               merge_query_recursive(a_query_selection, matching_field) unless exempt_node_types.any? { |type| matching_field.is_a?(type) }
             else
-              b_query.selections << a_query_selection
+              b_query.instance_variable_set(:@selections, [b_query.selections, a_query_selection].flatten)
             end
           end
         end
@@ -112,11 +114,11 @@ module GraphQL
             unless exempt_node_types.any? { |type| selection.is_a? type }
               prime_factor = selection.instance_variable_get(:@prime)
 
-              selection.alias = if selection.alias
+              selection.instance_variable_set(:@alias, if selection.alias
                 "p#{prime_factor}#{selection.alias}"
               else
                 "p#{prime_factor}#{selection.name}"
-              end
+              end)
             end
 
             # Some nodes don't have selections (e.g. fragment spreads)
