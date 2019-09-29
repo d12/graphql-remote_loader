@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    graphql-remote_loader (1.0.4)
+    graphql-remote_loader (1.0.5)
       graphql (~> 1.9)
       graphql-batch (~> 0.3)
 
