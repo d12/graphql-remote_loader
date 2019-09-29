@@ -1,2 +1,5 @@
 language: ruby
+# Work around an issue where bundler isn't installed correctly on Ruby 2.5.
+# We should remove this once Travis uses Ruby 2.6 by default.
+rvm: 2.6
 script: bundle exec rspec
