@@ -45,6 +45,8 @@ module GraphQL
             if matching_fragment_definition
               merge_query_recursive(a_definition, matching_fragment_definition)
             else
+              # graphql-ruby Nodes aren't meant to be mutated, but I'd rather slightly abuse graphql-ruby vs
+              # maintain my own Ruby data and parsing library implementing the GraphQL spec.
               b_query.instance_variable_set(:@definitions, [b_query.definitions, a_definition].flatten)
             end
           end
