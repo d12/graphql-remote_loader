@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "prime"
 require "json"
 require_relative "query_merger"
