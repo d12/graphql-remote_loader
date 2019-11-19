@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "prime"
 require "json"
 require_relative "query_merger"
@@ -19,9 +21,7 @@ module GraphQL
 
         store_context(context)
 
-        interpolate_variables!(query, variables)
-
-        self.for.load([query, prime, @context])
+        self.for.load([interpolate_variables(query, variables), prime, @context])
       end
 
       # Loads the value, then if the query was successful, fulfills promise with
@@ -97,6 +97,10 @@ module GraphQL
       # E.g.
       #   interpolate_variables("foo(bar: $my_var)", { my_var: "buzz" })
       #   => "foo(bar: \"buzz\")"
+      def self.interpolate_variables(query, variables = {})
+        query.dup.tap { |mutable_query| interpolate_variables!(mutable_query, variables) }
+      end
+
       def self.interpolate_variables!(query, variables = {})
         variables.each do |variable, value|
           case value

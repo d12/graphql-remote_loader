@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GraphQL
   module RemoteLoader
     # Given a list of queries and their prime UIDs, generate the merged and labeled
