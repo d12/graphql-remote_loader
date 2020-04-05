@@ -138,18 +138,17 @@ module GraphQL
             graphql_caller[caller_id] == 1 # Fixnum#[] accesses bitwise representation of num
           end
 
-          # redefine methods on new obj, recursively filter sub-selections
-          fields.each do |method|
-            method_name = method.match(/\Ap[0-9]+(.*)/)[1]
+          # redefine fields on new obj, recursively filter sub-selections
+          fields.each do |field|
+            field_name = field.match(/\Ap[0-9]+(.*)/)[1]
 
-            method_value = obj[method]
-            filtered_value = filter_keys_on_data(method_value, caller_id)
-
-            filtered_results[underscore(method_name)] = filtered_value
+            value = obj[field]
+            filtered_results[underscore(field_name)] = filter_keys_on_data(value, caller_id)
           end
 
           filtered_results
         else
+          # Base case, no more recursion needed.
           return obj
         end
       end
