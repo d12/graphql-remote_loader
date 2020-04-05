@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "prime"
 require "json"
 require_relative "query_merger"
 
@@ -8,20 +7,18 @@ module GraphQL
   module RemoteLoader
     class Loader < GraphQL::Batch::Loader
       # Delegates to GraphQL::Batch::Loader#load
-      # We include a unique prime as part of the batch key to use as part
+      # We include a unique id as part of the batch key to use as part
       # of the alias on all fields. This is used to
       # a) Avoid name collisions in the generated query
       # b) Determine which fields in the result JSON should be
       #    handed fulfilled to each promise
       def self.load(query, context: {}, variables: {})
-        @index ||= 1
+        @index ||= 0
         @index += 1
-
-        prime = Prime.take(@index - 1).last
 
         store_context(context)
 
-        self.for.load([interpolate_variables(query, variables), prime, @context])
+        self.for.load([interpolate_variables(query, variables), @index, @context])
       end
 
       # Loads the value, then if the query was successful, fulfills promise with
@@ -69,24 +66,24 @@ module GraphQL
 
       private
 
-      def perform(queries_and_primes)
-        query_string = QueryMerger.merge(queries_and_primes).gsub(/\s+/, " ")
-        context = queries_and_primes[-1][-1]
+      def perform(queries_and_ids)
+        query_string = QueryMerger.merge(queries_and_ids).gsub(/\s+/, " ")
+        context = queries_and_ids[-1][-1]
         response = query(query_string, context: context).to_h
 
         data, errors = response["data"], response["errors"]
 
-        queries_and_primes.each do |query, prime, context|
+        queries_and_ids.each do |query, caller_id, context|
           response = {}
 
-          response["data"] = filter_keys_on_data(data, prime)
+          response["data"] = filter_keys_on_data(data, caller_id)
 
-          errors_key = filter_errors(errors, prime)
+          errors_key = filter_errors(errors, caller_id)
           response["errors"] = dup(errors_key) unless errors_key.empty?
 
-          scrub_primes_from_error_paths!(response["errors"])
+          scrub_caller_ids_from_error_paths!(response["errors"])
 
-          fulfill([query, prime, context], response)
+          fulfill([query, caller_id, context], response)
         end
       end
 
@@ -125,10 +122,10 @@ module GraphQL
         JSON.parse(hash.to_json)
       end
 
-      def filter_keys_on_data(obj, prime)
+      def filter_keys_on_data(obj, caller_id)
         case obj
         when Array
-          obj.map { |element| filter_keys_on_data(element, prime) }
+          obj.map { |element| filter_keys_on_data(element, caller_id) }
         when Hash
           filtered_results = {}
 
@@ -137,8 +134,8 @@ module GraphQL
 
           # Filter methods that were not requested in this sub-query
           fields = fields.select do |field|
-            prime_factor = field.match(/\Ap([0-9]+)/)[1].to_i
-            (prime_factor % prime) == 0
+            graphql_caller = field.match(/\Ap([0-9]+)/)[1].to_i
+            graphql_caller[caller_id] == 1 # Fixnum#[] accesses bitwise representation of num
           end
 
           # redefine methods on new obj, recursively filter sub-selections
@@ -146,7 +143,7 @@ module GraphQL
             method_name = method.match(/\Ap[0-9]+(.*)/)[1]
 
             method_value = obj[method]
-            filtered_value = filter_keys_on_data(method_value, prime)
+            filtered_value = filter_keys_on_data(method_value, caller_id)
 
             filtered_results[underscore(method_name)] = filtered_value
           end
@@ -157,7 +154,7 @@ module GraphQL
         end
       end
 
-      def filter_errors(errors, prime)
+      def filter_errors(errors, caller_id)
         return [] unless errors
 
         errors.select do |error|
@@ -169,13 +166,13 @@ module GraphQL
           error["path"].all? do |path_key|
             next true if path_key.is_a? Integer
 
-            path_key_prime = path_key.match(/\Ap([0-9]+)/)[1].to_i
-            path_key_prime % prime == 0
+            path_key_caller_id = path_key.match(/\Ap([0-9]+)/)[1].to_i
+            path_key_caller_id[caller_id]
           end
         end
       end
 
-      def scrub_primes_from_error_paths!(error_array)
+      def scrub_caller_ids_from_error_paths!(error_array)
         return unless error_array
 
         error_array.map do |error|

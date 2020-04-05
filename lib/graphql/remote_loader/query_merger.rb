@@ -2,16 +2,16 @@
 
 module GraphQL
   module RemoteLoader
-    # Given a list of queries and their prime UIDs, generate the merged and labeled
+    # Given a list of queries and their caller IDs, generate the merged and labeled
     # GraphQL query to be sent off to the remote backend.
     class QueryMerger
       class << self
-        def merge(queries_and_primes)
-          parsed_queries = queries_and_primes.map do |query, prime|
+        def merge(queries_and_caller_ids)
+          parsed_queries = queries_and_caller_ids.map do |query, caller_id|
             parsed_query = parse(query)
 
             parsed_query.definitions.each do |definition|
-              attach_primes!(definition.children, prime)
+              attach_caller_id!(definition.children, caller_id)
             end
 
             parsed_query
@@ -77,10 +77,10 @@ module GraphQL
             end
 
             if matching_field
-              new_prime = matching_field.instance_variable_get(:@prime) *
-                a_query_selection.instance_variable_get(:@prime)
+              new_binary_id = matching_field.instance_variable_get(:@binary_id) +
+                a_query_selection.instance_variable_get(:@binary_id)
 
-              matching_field.instance_variable_set(:@prime, new_prime)
+              matching_field.instance_variable_set(:@binary_id, new_binary_id)
               merge_query_recursive(a_query_selection, matching_field) unless exempt_node_types.any? { |type| matching_field.is_a?(type) }
             else
               b_query.instance_variable_set(:@selections, [b_query.selections, a_query_selection].flatten)
@@ -99,10 +99,10 @@ module GraphQL
             b.arguments.map { |arg| {name: arg.name, value: arg.value}.to_s }.sort
         end
 
-        def attach_primes!(query_fields, prime)
+        def attach_caller_id!(query_fields, caller_id)
           query_fields.each do |field|
-            field.instance_variable_set(:@prime, prime)
-            attach_primes!(field.children, prime)
+            field.instance_variable_set(:@binary_id, 2 ** caller_id)
+            attach_caller_id!(field.children, caller_id)
           end
         end
 
@@ -114,12 +114,12 @@ module GraphQL
 
           query_selections.each do |selection|
             unless exempt_node_types.any? { |type| selection.is_a? type }
-              prime_factor = selection.instance_variable_get(:@prime)
+              binary_id = selection.instance_variable_get(:@binary_id)
 
               selection.instance_variable_set(:@alias, if selection.alias
-                "p#{prime_factor}#{selection.alias}"
+                "p#{binary_id}#{selection.alias}"
               else
-                "p#{prime_factor}#{selection.name}"
+                "p#{binary_id}#{selection.name}"
               end)
             end
 
