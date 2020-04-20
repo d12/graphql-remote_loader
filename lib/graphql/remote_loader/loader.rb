@@ -101,7 +101,7 @@ module GraphQL
       def self.interpolate_variables!(query, variables = {})
         variables.each do |variable, value|
           case value
-          when Integer, Float, TrueClass, FalseClass
+          when Integer, Float, TrueClass, FalseClass, Array
             # These types are safe to directly interpolate into the query, and GraphQL does not expect these types to be quoted.
             query.gsub!("$#{variable.to_s}", value.to_s)
           else
