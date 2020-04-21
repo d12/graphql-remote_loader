@@ -137,10 +137,10 @@ describe GraphQL::RemoteLoader::Loader do
       TestLoader.any_instance.should_receive(:query).once
         .with('query { p2foo: foo(bar: {array: ["fir\"st", true, 5], text: "value", number: 6}) }', anything)
         .and_return({
-                      "data" => {
-                        "p2foo" => "foo_result"
-                      }
-                    })
+          "data" => {
+            "p2foo" => "foo_result"
+          }
+        })
 
       results = GraphQL::Batch.batch do
         TestLoader.load("foo(bar: $my_variable)",
