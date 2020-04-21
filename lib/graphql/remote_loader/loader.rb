@@ -99,22 +99,32 @@ module GraphQL
       end
 
       def self.interpolate_variables!(query, variables = {})
-        variables.each do |variable, value|
-          case value
-          when Integer, Float, TrueClass, FalseClass
-            # These types are safe to directly interpolate into the query, and GraphQL does not expect these types to be quoted.
-            query.gsub!("$#{variable.to_s}", value.to_s)
-          else
-            # A string is either a GraphQL String or ID type.
-            # This means we need to
-            # a) Surround the value in quotes
-            # b) escape special characters in the string
-            #
-            # This else also catches unknown objects, which could break the query if we directly interpolate.
-            # These objects get converted to strings, then escaped.
+        variables.each { |variable, value| query.gsub!("$#{variable.to_s}", stringify_variable(value)) }
+      end
 
-            query.gsub!("$#{variable.to_s}", value.to_s.inspect)
-          end
+      def self.stringify_variable(value)
+        case value
+        when Integer, Float, TrueClass, FalseClass
+          # These types are safe to directly interpolate into the query, and GraphQL does not expect these types to be quoted.
+          value.to_s
+        when Array
+          # Arrays can contain elements with various types, so we need to check them one by one
+          stringified_elements = value.map { |element| stringify_variable(element) }
+          "[#{stringified_elements.join(', ')}]"
+        when Hash
+          # Hashes can contain values with various types, so we need to check them one by one
+          stringified_key_value_pairs = value.map { |key, value| "#{key}: #{stringify_variable(value)}" }
+          "{#{stringified_key_value_pairs.join(', ')}}"
+        else
+          # A string is either a GraphQL String or ID type.
+          # This means we need to
+          # a) Surround the value in quotes
+          # b) escape special characters in the string
+          #
+          # This else also catches unknown objects, which could break the query if we directly interpolate.
+          # These objects get converted to strings, then escaped.
+
+          value.to_s.inspect
         end
       end
 
